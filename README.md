@@ -74,13 +74,13 @@ Getting Started
 ===============
 
 ## Get source files
+Very important follow the exact method,
 
-```bash
-go get -u -d github.com/devsisters/goquic
 ```
-
--u option is needed, because building (or downloading) static libraries is
-necessary for building and installing goquic library.
+mkdir $GOPATH/src/github.com/devsisters
+cd $GOPATH/src/github.com/devsisters
+git clone https://github.com/betacraft/goquic.git
+```
 
 ## Build static library files
 
@@ -98,6 +98,10 @@ This will fetch `libquic` master and build all the binaries from source. The
 C/C++ files for Go bindings will be all built too.
 
 Currently Linux and Mac OS X and FreeBSD is supported.
+
+#### Requirements
+* Cmake
+* Ninja
 
 ## How to build
 
@@ -149,4 +153,17 @@ instead of
 
 ```go
 resp, err := http.Get("http://example.com/")
+```
+
+
+### Pushing code and Upgrading code
+
+Code must pe pushed to the fork remote, while pushing code, do
+```
+git push fork master
+```
+
+Taking latest code, do:
+```
+git pull fork master
 ```
