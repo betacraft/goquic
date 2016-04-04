@@ -33,6 +33,10 @@ func (e *errorString) Error() string {
 	return e.s
 }
 
+func (c *Conn) GetAddr() *net.UDPAddr {
+	return c.addr
+}
+
 func (c *Conn) Close() (err error) {
 	if !c.closed {
 		c.quicClient.SendConnectionClosePacket()
@@ -101,12 +105,16 @@ func (c *Conn) waitForEvents() bool {
 	return c.quicClient.session.NumActiveRequests() != 0
 }
 
-func (c *Conn) Connect() bool {
+func (c *Conn) Connect(secure bool) bool {
 	qc := c.quicClient
 	qc.StartConnect()
-	for qc.EncryptionBeingEstablished() {
-		// Busy loop waiting for connection to be established
-		// TODO(serialx): Maybe we can add some tiny deadlines instead of time.Now to decrease busy waiting?
+	if secure {
+		for qc.EncryptionBeingEstablished() {
+			// Busy loop waiting for connection to be established
+			// TODO(serialx): Maybe we can add some tiny deadlines instead of time.Now to decrease busy waiting?
+			c.waitForEvents()
+		}
+	} else { // without encryption
 		c.waitForEvents()
 	}
 	return qc.IsConnected()
@@ -127,7 +135,7 @@ func (c *Conn) Writer() *ClientWriter {
 	return c.writer
 }
 
-func Dial(network, address string) (c *Conn, err error) {
+func Dial(network, address string, secure bool) (c *Conn, err error) {
 	i := strings.LastIndex(network, ":")
 	if i > 0 { // has colon
 		return nil, &errorString{"Not supported yet"} // TODO
@@ -138,10 +146,10 @@ func Dial(network, address string) (c *Conn, err error) {
 		return nil, err
 	}
 
-	return dialQuic(network, net.Addr(ra).(*net.UDPAddr))
+	return dialQuic(network, net.Addr(ra).(*net.UDPAddr), secure)
 }
 
-func dialQuic(network string, addr *net.UDPAddr) (*Conn, error) {
+func dialQuic(network string, addr *net.UDPAddr, secure bool) (*Conn, error) {
 	switch network {
 	case "udp", "udp4", "udp6":
 	default:
@@ -216,7 +224,7 @@ func dialQuic(network string, addr *net.UDPAddr) (*Conn, error) {
 		close(quic_conn.writer.Ch)
 	}()
 
-	if quic_conn.Connect() == false {
+	if quic_conn.Connect(secure) == false {
 		return nil, &errorString{"Cannot connect"}
 	}
 
