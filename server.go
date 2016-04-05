@@ -162,7 +162,7 @@ func (srv *QuicSpdyServer) ListenAndServe() error {
 func (srv *QuicSpdyServer) Serve(listen_addr *net.UDPAddr, writer *ServerWriter, readChan chan UdpData, statChan chan statCallback) error {
 	runtime.LockOSThread()
 
-	proofSource := NewProofSource(srv.Certificate)
+	proofSource := NewProofSource(srv.Certificate, srv.isSecure)
 	cryptoConfig := InitCryptoConfig(proofSource)
 	defer DeleteCryptoConfig(cryptoConfig)
 

@@ -177,6 +177,9 @@ func dialQuic(network string, addr *net.UDPAddr, secure bool) (*Conn, error) {
 
 	taskRunner := CreateTaskRunner()
 	proofVerifier := CreateProofVerifier()
+	if !secure {
+		proofVerifier = nil
+	}
 	quicClient, err := CreateQuicClient(addr, quic_conn, createSpdyClientSession, taskRunner, proofVerifier)
 	if err != nil {
 		return nil, err

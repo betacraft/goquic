@@ -21,11 +21,16 @@ const kPrefixStr = "QUIC server config signature"
 const kPrefixLen = len(kPrefixStr) + 1
 
 type ProofSource struct {
+	IsSecure      bool // if false do not make any checks
 	Certificate   tls.Certificate
 	proofSource_c unsafe.Pointer
 }
 
 func (ps *ProofSource) GetProof(addr net.IP, hostname []byte, serverConfig []byte, ecdsaOk bool) (outSignature []byte) {
+	if !ps.IsSecure {
+		return outSignature
+	}
+
 	var err error = nil
 
 	bufferToSign := bytes.NewBuffer(make([]byte, 0, len(serverConfig)+kPrefixLen))
@@ -68,9 +73,8 @@ type ServerCryptoConfig struct {
 	serverCryptoConfig unsafe.Pointer
 }
 
-func NewProofSource(cert tls.Certificate) *ProofSource {
-	ps := &ProofSource{Certificate: cert}
-
+func NewProofSource(cert tls.Certificate, isSecure bool) *ProofSource {
+	ps := &ProofSource{Certificate: cert, IsSecure: isSecure}
 	// Initialize Proof Source
 	proofSource_c := C.init_proof_source_goquic(C.GoPtr(proofSourcePtr.Set(ps)))
 
